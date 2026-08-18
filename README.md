@@ -1,5 +1,5 @@
-# MyWE - Telecom Egypt Quota Monitor
-
+# MyWE - My We Egypt Quota Monitor
+![image](http://spysnet.com/mywe) <br>
 A lightweight desktop application and system tray utility to monitor Telecom Egypt (WE) internet quota in real time, featuring automated AI-powered captcha solving.
 
 Built with **zero external runtime dependencies** (standard Python library + native Win32 `ctypes` bindings) for an ultra-lightweight footprint and minimal executable size.
@@ -9,7 +9,7 @@ Built with **zero external runtime dependencies** (standard Python library + nat
 ## Features
 
 - **Live Quota Tracking**: Real-time circular progress gauge showing remaining, used, and total gigabytes.
-- **AI Captcha Solving**: Automatically resolves login captchas via Google Gemini (`gemini-2.5-flash`) using standard `urllib.request`.
+- **AI Captcha Solving**: Automatically resolves login captchas via Google Gemini (`gemini-3.1-flash`) using standard `urllib.request`.
 - **System Tray Integration**: Native Windows system tray integration via `ctypes` (`Shell_NotifyIconW`) with customizable popup menu (Show/Hide, Settings, Reset Position, Exit).
 - **Vector UI**: Crisp vector-rendered settings gear button via native Tkinter canvas (no Pillow dependency).
 - **Usage History & Deltas**: Rolling 24-hour log persistence (`quota_log.json`) tracking 30-minute consumption deltas.
@@ -31,8 +31,7 @@ Built with **zero external runtime dependencies** (standard Python library + nat
 
 1. **Clone this repository**:
    ```bash
-   git clone https://github.com/your-username/mywe.git
-   cd mywe
+   git clone https://github.com/spyisme/we-quota-tracker.git
    ```
 
 2. **(Optional) Install packaging dependencies**:
@@ -98,3 +97,4 @@ python scripts/build.py
 ## License
 
 This project is for personal educational use. Not affiliated with or endorsed by Telecom Egypt (WE).
+Inspired by karimawi.
