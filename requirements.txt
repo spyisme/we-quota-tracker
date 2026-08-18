@@ -1,5 +1,2 @@
-requests
-google-genai
-pillow
-pystray
-pyinstaller
+# Packaging dependency (Zero external pip dependencies required at runtime)
+pyinstaller>=6.0.0

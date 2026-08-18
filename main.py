@@ -1,32 +1,17 @@
-import requests 
-from capsolver import solveCaptcha
+import sys
+from src.capsolver import solveCaptcha
+from src.gui import StandardSession, load_config
 
+cfg = load_config()
+landline = cfg.get("LANDLINE") or "02xxx"
+password = cfg.get("MY_WE_PASSWORD") or "xxx"
+apiKey   = cfg.get("GOOGLE_API_KEY") or ""
 
-landline = "02xxx" #Landline (include governorate code 02 for cairo then the number)
-password = "xxx"
-apiKey = "" #Google ai stuido key for captcha (might add support for manual solve soon)
+if landline == "02xxx" or password == "xxx":
+    print("[INFO] Please configure your landline and password in config.json or via the GUI settings.")
 
-
-acctId = "FBB" + landline[1:]
-session = requests.Session()
-
-session.headers.update({
-    "Connection": "keep-alive",
-    "sec-ch-ua-platform": "\"Windows\"",
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/151.0.0.0 Safari/537.36",
-    "Accept": "application/json, text/plain, */*",
-    "sec-ch-ua": "\"Not=A?Brand\";v=\"99\", \"Brave\";v=\"151\", \"Chromium\";v=\"151\"",
-    "Content-Type": "application/json; charset=UTF-8",
-    "sec-ch-ua-mobile": "?0",
-    "Sec-GPC": "1",
-    "Origin": "https://my.te.eg",
-    "Sec-Fetch-Site": "same-site",
-    "Sec-Fetch-Mode": "cors",
-    "Sec-Fetch-Dest": "empty",
-    "Referer": "https://my.te.eg/",
-    "Accept-Encoding": "gzip, deflate, br, zstd",
-    "Accept-Language": "en-US,en;q=0.9"
-})
+acctId = "FBB" + landline[1:] if len(landline) > 1 else ""
+session = StandardSession()
 
 captchaPayload = {
     "merchantName": "E-Care",
@@ -34,36 +19,33 @@ captchaPayload = {
     "identifier": landline,
 }
 
-
-response = session.post("https://captcha.te.eg/api/Captcha/GenerateCaptcha", json=captchaPayload)
+response = session.post("https://captcha.te.eg/api/Captcha/GenerateCaptcha", json_data=captchaPayload)
 captcha = response.json()
 
-
-if captcha["status"] != "Success" :
-    print("Captcha request failed")
-    exit()
+if captcha.get("status") != "Success":
+    print("Captcha request failed:", captcha)
+    sys.exit(1)
 
 captchaToken = captcha["token"]
 
-if captcha["requireInteraction"] == False :
-    print("captcha passed no interaction need")
-    answer=""
-
-else :
-    print("Trying to solve captcha")
-    answer = solveCaptcha(captcha["captcha"] , apiKey)["letters"] # Add recover for error and logs
-    print(f"Captcha Solved : {answer}")
-    
-
+if captcha.get("requireInteraction") is False:
+    print("Captcha passed: no interaction needed")
+    answer = ""
+else:
+    print("Trying to solve captcha...")
+    answer = solveCaptcha(captcha["captcha"], apiKey)["letters"]
+    print(f"Captcha Solved: {answer}")
 
 loginPayload = {
     "acctId": acctId,
     "password": password,
-    "imgCacheKey" : captchaToken,
-    "appLocale":"en-US", "isSelfcare":"Y", "isMobile":"N",
-    "imgCode":answer,"isConvergent":"0"
+    "imgCacheKey": captchaToken,
+    "appLocale": "en-US",
+    "isSelfcare": "Y",
+    "isMobile": "N",
+    "imgCode": answer,
+    "isConvergent": "0",
 }
-
 
 session.headers.update({
     "channelid": "702",
@@ -76,44 +58,51 @@ session.headers.update({
     "systemtype": "",
 })
 
-
 response = session.post(
     "https://my.te.eg/echannel/service/besapp/base/rest/busiservice/v1/auth/userAuthenticate",
-    json=loginPayload 
+    json_data=loginPayload,
 )
 login = response.json()
-print(login)
-csrf = login["body"]["token"] # header
+print("Login response:", login)
 
-session.headers.update({
-    "csrftoken": csrf  
-})
+try:
+    csrf = login["body"]["token"]
+except (KeyError, TypeError):
+    print("[ERROR] Login failed: check credentials.")
+    sys.exit(1)
 
+session.headers.update({"csrftoken": csrf})
 subscriberId = login["body"]["subscriber"]["subscriberId"]
 
 offersPayload = {
     "msisdn": acctId,
-    "numberServiceType" :"FBB",
+    "numberServiceType": "FBB",
     "groupId": "",
-
 }
 
-response = session.post("https://my.te.eg/echannel/service/besapp/base/rest/busiservice/cz/v1/auth/getSubscribedOfferings" , json = offersPayload )
-
-mainOfferId =response.json()["body"]["offeringList"][0]["mainOfferingId"]
-
-
+response = session.post(
+    "https://my.te.eg/echannel/service/besapp/base/rest/busiservice/cz/v1/auth/getSubscribedOfferings",
+    json_data=offersPayload,
+)
+mainOfferId = response.json()["body"]["offeringList"][0]["mainOfferingId"]
 
 quotaPayload = {
     "subscriberId": subscriberId,
-    "needQueryPoint" :"true",
+    "needQueryPoint": "true",
     "mainOfferId": mainOfferId,
-
 }
 
-response = session.post("https://my.te.eg/echannel/service/besapp/base/rest/busiservice/cz/cbs/bb/queryFreeUnit" , json = quotaPayload)
-
+response = session.post(
+    "https://my.te.eg/echannel/service/besapp/base/rest/busiservice/cz/cbs/bb/queryFreeUnit",
+    json_data=quotaPayload,
+)
 quota = response.json()
 
-print(f"Used : {quota['body'][0]['used']} Gb")
-print(f"Remaining : {quota['body'][0]['actualRemain']} Gb from {quota['body'][0]['total']} Gb")
+if "body" in quota and quota["body"]:
+    used = sum(float(item.get("used", 0)) for item in quota["body"])
+    remain = sum(float(item.get("actualRemain", 0)) for item in quota["body"])
+    total = sum(float(item.get("total", 0)) for item in quota["body"])
+    print(f"Used: {used:.2f} GB")
+    print(f"Remaining: {remain:.2f} GB from {total:.0f} GB")
+else:
+    print("Could not retrieve quota details:", quota)
