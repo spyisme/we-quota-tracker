@@ -4,12 +4,12 @@ import urllib.error
 
 
 def solveCaptcha(base64_image: str, api_key: str) -> dict:
-    """Solves captcha image using Google Gemini 2.5 Flash with structured JSON output."""
+    """Solves captcha image using Google Gemini 3.1 Flash Lite with structured JSON output."""
     base64_image = base64_image.strip().replace("\n", "").replace("\r", "")
     if "base64," in base64_image:
         base64_image = base64_image.split("base64,")[1]
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={api_key}"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite:generateContent?key={api_key}"
 
     payload = {
         "system_instruction": {
