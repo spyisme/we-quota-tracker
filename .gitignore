@@ -1,0 +1,11 @@
+.env
+config.json
+session_data.json
+quota_log.json
+app.lock
+
+# Build artifacts
+build/
+dist/
+*.spec
+__pycache__/
