@@ -1,7 +1,11 @@
 # MyWE - My We Egypt Quota Monitor
-![image](http://spysnet.com/mywepic) <br>
-A lightweight desktop application and system tray utility to monitor Telecom Egypt (WE) internet quota in real time, featuring automated AI-powered captcha solving.
 
+<p align="center">
+  <img src="imgs/mywe.png" alt="Preview 1" width="45%" />
+  <img src="imgs/mywe2.jpeg" alt="Preview 2" width="45%" />
+</p>
+
+A lightweight desktop application and system tray utility to monitor Telecom Egypt (WE) internet quota in real time, featuring automated AI-powered captcha solving.
 Built with **zero external runtime dependencies** (standard Python library + native Win32 `ctypes` bindings) for an ultra-lightweight footprint and minimal executable size.
 
 ---
